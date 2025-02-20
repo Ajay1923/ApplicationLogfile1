@@ -1,0 +1,12 @@
+com\crud\demo\LogfilesApplication.class
+com\crud\demo\service\UserService.class
+com\crud\demo\model\StatisticsEntry.class
+com\crud\demo\service\StatisticsFinalService.class
+com\crud\demo\repository\UserRepository.class
+com\crud\demo\controller\UserController.class
+com\crud\demo\ServletInitializer.class
+com\crud\demo\model\User.class
+com\crud\demo\repository\StatisticsFinalRepository.class
+com\crud\demo\controller\FileUploadController.class
+com\crud\demo\service\StatisticsService.class
+com\crud\demo\model\StatisticsFinal.class

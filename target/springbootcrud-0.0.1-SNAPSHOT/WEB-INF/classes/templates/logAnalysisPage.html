@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Log Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Arial", sans-serif;
+            background: linear-gradient(to right, #FFD700, #FF6347);
+            color: #333;
+            line-height: 1.6;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .graph-container, .stacktrace-container {
+            width: 45%;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .stacktrace-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border-radius: 20px;
+        }
+        .stacktrace {
+          text-align: left;  /* Align text to the left */
+          white-space: pre-wrap;  /* Preserve line breaks and spacing */
+          font-family: monospace;  /* Use monospace for better readability */
+          padding: 65px;         
+          border-radius: 10px;  
+          margin-top: 10px;       
+          width: 100%;            
+          max-width: 100%;       
+             
+          } 
+
+    </style>
+</head>
+<body>
+    <h2>Log Analysis Graph</h2>
+    
+    <div class="container">
+        <div class="graph-container">
+            <h3>Exception Occurrences Over Time</h3>
+            <label for="fileFilter">Select File:</label>
+            <select id="fileFilter" onchange="updateGraph()">
+                <option value="all">All</option>
+                <option th:each="filename : ${filenames}" th:value="${filename}" th:text="${filename}"></option>
+            </select>
+            <label for="exceptionFilter">Select Exception Type:</label>
+            <select id="exceptionFilter" onchange="updateGraph()">
+                <option value="all">All</option>
+            </select>
+            <canvas id="logChart"></canvas>
+        </div>
+        
+        <div class="stacktrace-container" id="stacktrace-container">
+            <h3>Stack Traces</h3>
+            <p>Select a timestamp on the graph to view related stack traces.</p>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+        let chartData = [[${groupedLogsCounts}]];
+        let stackTraceData = [[${groupedLogsStackTraces}]];
+        let sortedTimestamps = [[${sortedTimestamps}]];
+        let exceptionTypes = new Set();
+        
+        sortedTimestamps.forEach(timestamp => {
+            Object.keys(chartData[timestamp]).forEach(exception => {
+                exceptionTypes.add(exception);
+            });
+        });
+        
+        let exceptionFilter = document.getElementById("exceptionFilter");
+        exceptionTypes.forEach(exception => {
+            let option = document.createElement("option");
+            option.value = exception;
+            option.textContent = exception;
+            exceptionFilter.appendChild(option);
+        });
+        
+        function getRandomColor() {
+            return `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`;
+        }
+        
+        function updateGraph() {
+            let selectedException = exceptionFilter.value;
+            let selectedFile = document.getElementById("fileFilter").value;
+            let datasets = [];
+            
+            if (selectedException === "all") {
+                exceptionTypes.forEach(exception => {
+                    let dataPoints = sortedTimestamps.map(timestamp => chartData[timestamp][exception] || 0);
+                    datasets.push({
+                        label: exception,
+                        data: dataPoints,
+                        borderColor: getRandomColor(),
+                        fill: false
+                    });
+                });
+            } else {
+                let dataPoints = sortedTimestamps.map(timestamp => chartData[timestamp][selectedException] || 0);
+                datasets.push({
+                    label: selectedException,
+                    data: dataPoints,
+                    borderColor: getRandomColor(),
+                    fill: false
+                });
+            }
+            
+            chart.data.datasets = datasets;
+            chart.update();
+        }
+        
+        let ctx = document.getElementById('logChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: sortedTimestamps,
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Timestamp' } },
+                    y: { title: { display: true, text: 'Occurrences' }, beginAtZero: true }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        let index = elements[0].index;
+                        let selectedTimestamp = sortedTimestamps[index];
+                        displayStackTrace(selectedTimestamp);
+                    }
+                }
+            }
+        });
+        
+        updateGraph();
+        
+        function displayStackTrace(timestamp) {
+            let stacktraceContainer = document.getElementById('stacktrace-container');
+            stacktraceContainer.innerHTML = ''; // Clear previous content
+
+            if (stackTraceData[timestamp]) {
+                let stackTraceHTML = '';
+                Object.keys(stackTraceData[timestamp]).forEach(exception => {
+                    
+                    stackTraceHTML += `<h5 style="margin-bottom: 3px; font-size: 20px; font-weight: bold;">Filtered ${exception}</h5>`; 
+                    stackTraceHTML += `<h5 style="margin-bottom: 1px; font-size: 18px; font-weight: bold; background-color: #00796b; color: white; padding: 5px 50px; text-align: left; margin-top: 10px; border-radius: 5px; width: 100%;">Error Entry</h5>`;
+                    stackTraceData[timestamp][exception].forEach(trace => {
+                        let formattedTrace = trace.split('\n').map(line => line.trim()).join('\n');
+                        stackTraceHTML += `<pre class="stacktrace" style="margin-top: 5px; padding: 10px; ">${formattedTrace}</pre>`; // Improved padding and background color for clarity
+                    });
+                });
+                stacktraceContainer.innerHTML = stackTraceHTML;
+            } else {
+                stacktraceContainer.innerHTML = `<p>No stack traces available for this timestamp.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

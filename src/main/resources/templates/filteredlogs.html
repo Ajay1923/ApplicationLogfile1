@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtered Error Logs</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Arial", sans-serif;
+            background: linear-gradient(to right, #FFD700, #FF6347);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: #581845;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 500;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logout-btn {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background-color: #00796b;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 10px 20px;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #004d40;
+        }
+
+        .content {
+            padding: 20px;
+            padding-top: 100px;
+            text-align: center;
+        }
+
+        .logs {
+            background: #ffffff;
+            padding: 35px;
+            border-radius: 25px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 50px;
+            overflow-y: auto;
+            max-height: 700px;
+            width: 80%;
+            margin: 0 auto;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .logs table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logs th, .logs td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .logs th {
+            background-color: #00796b;
+            color: #ffffff;
+        }
+
+        .btn-group-logs a {
+            padding: 10px 20px;
+            color: #ffffff;
+            background-color: #00796b;
+            border: 1px solid #004d40;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s, border-color 0.3s;
+            text-align: center;
+        }
+
+        .btn-group-logs a:hover {
+            background-color: #004d40;
+        }
+
+        @media screen and (max-width: 500px) {
+            .logs {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span>StackTrace</span>
+    </div>
+
+    <div class="content">
+        <div id="filteredLogs" class="logs centered">
+            <h2 id="filteredLogsTitle">Filtered  <span th:text="${exceptionType}"></span></h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Error Entry</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Loop through filtered logs dynamically -->
+                    <tr th:each="log : ${filteredLogs}">
+                        <!-- Dynamically format the log stack trace using JavaScript -->
+                        <td class="log-entry" th:text="${log}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <center>
+        <div class="btn-group-logs">
+            <a th:href="@{/downloadFilteredErrorLogs(exceptionType=${exceptionType})}" target="_blank">Download Filtered Logs</a>
+        </div>
+    </center>
+<script>
+    // Wait for the document to load before processing the logs
+    document.addEventListener("DOMContentLoaded", function () {
+        const logEntries = document.querySelectorAll('.log-entry');
+
+        // Iterate over each log entry and format its content
+        logEntries.forEach(function (entry) {
+            // Get the log content from the text content of each entry
+            let logContent = entry.innerHTML; // Use innerHTML to capture any HTML tags
+
+            // Remove any <strong> or other tags around the text 'Access Denied'
+            logContent = logContent.replace(/<strong>Access Denied<\/strong>/g, 'Access Denied');
+
+            // Replace ' at ' (with spaces around it) by adding <br> before it
+            let formattedLog = logContent.replace(/(\s+at\s+)/g, '<br>$1');
+
+            // Apply the formatted log content back to the element
+            entry.innerHTML = formattedLog;
+        });
+    });
+</script>
+
+
+</body>
+</html>
