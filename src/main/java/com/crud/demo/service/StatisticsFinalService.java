@@ -16,14 +16,21 @@ public class StatisticsFinalService {
     private StatisticsFinalRepository statisticsFinalRepository;
 
     public void saveStatistics(Long userId, String uploadedFileName, String resultingFileName,
-                               int accessExceptionCount, int cloudClientExceptionCount,
-                               int invalidFormatExceptionCount, int nullPointerExceptionCount,
-                               int schedulerExceptionCount, int superCsvExceptionCount,
-                               int ERRORCount, int INFOCount, int DEBUGCount, String logCodes, String status, String downloadedException) {
-        StatisticsFinal stats = new StatisticsFinal();
-        stats.setUserId(userId);
-        stats.setTimestamp(LocalDateTime.now());
-        stats.setUploadedFileName(uploadedFileName);
+            int accessExceptionCount, int cloudClientExceptionCount,
+            int invalidFormatExceptionCount, int nullPointerExceptionCount,
+            int schedulerExceptionCount, int superCsvExceptionCount,
+            int validationExceptionCount,
+            int errorCount, int infoCount, int debugCount, 
+            String logCodes, String status, 
+            String downloadedException,
+            String fileType, String subId) {
+         StatisticsFinal stats = new StatisticsFinal();
+         stats.setUserId(userId);
+         stats.setTimestamp(LocalDateTime.now());
+         stats.setUploadedFileName(uploadedFileName);
+         stats.setFileType(fileType);
+         stats.setSubId(subId);
+
 
         // Update the resultingFileName and append to the existing list if needed
         String existingResultingFileNames = stats.getResultingFileName();
@@ -50,9 +57,10 @@ public class StatisticsFinalService {
         stats.setNullPointerExceptionCount(nullPointerExceptionCount);
         stats.setSchedulerExceptionCount(schedulerExceptionCount);
         stats.setSuperCsvExceptionCount(superCsvExceptionCount);
-        stats.setErrorCount(ERRORCount);
-        stats.setInfoCount(INFOCount);
-        stats.setDebugCount(DEBUGCount);
+        stats.setValidationExceptionCount(validationExceptionCount);
+        stats.setErrorCount(errorCount);
+        stats.setInfoCount(infoCount);
+        stats.setDebugCount(debugCount);
 
         statisticsFinalRepository.save(stats);
     }
@@ -121,5 +129,18 @@ public class StatisticsFinalService {
 	public static List<StatisticsEntry> getFilteredStatistics(String selectedFile) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public void saveStatistics(Long userId, String uploadedFileName, Object object, Integer orDefault,
+			Integer orDefault2, Integer orDefault3, Integer orDefault4, Integer orDefault5, Integer orDefault6,
+			Integer orDefault7, Integer orDefault8, Integer orDefault9, String string, int i, String string2,
+			String string3, String downloadedExceptionsStr) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void save(StatisticsFinal folderEntry) {
+		// TODO Auto-generated method stub
+		
 	}
 }

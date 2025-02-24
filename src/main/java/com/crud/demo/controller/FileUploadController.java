@@ -143,8 +143,8 @@ public class FileUploadController {
                 filteredCounts.getOrDefault("ERROR", 0),
                 filteredCounts.getOrDefault("INFO", 0),
                 filteredCounts.keySet().toString(),
-                "Uploaded",
-                String.join(", ", filteredCounts.keySet())
+                0, "Uploaded",
+                String.join(", ", filteredCounts.keySet()), resultingFileName
             );
 
         } catch (IOException e) {
@@ -161,7 +161,9 @@ public class FileUploadController {
     private Map<String, List<String>> logsPerFile = new HashMap<>();
     @PostMapping("/uploadFolder")
     public String uploadLogFolder(@RequestParam("logfolder") MultipartFile[] files, Model model) {
-    Long userId = getCurrentUserId();
+        Long userId = getCurrentUserId();
+        int folderFileIndex = 1;
+        String subId = UUID.randomUUID().toString();
 
     if (files == null || files.length == 0) {
         model.addAttribute("error", "Please select a folder containing log files.");
@@ -211,23 +213,27 @@ public class FileUploadController {
 
                 // Save statistics for each file separately
                 statisticsFinalService.saveStatistics(
-                    userId,
-                    filename,
-                    null,
-                    filteredCounts.getOrDefault("AccessException", 0),
-                    filteredCounts.getOrDefault("CloudClientException", 0),
-                    filteredCounts.getOrDefault("InvalidFormatException", 0),
-                    filteredCounts.getOrDefault("NullPointerException", 0),
-                    filteredCounts.getOrDefault("SchedulerException", 0),
-                    filteredCounts.getOrDefault("SuperCsvException", 0),
-                    filteredCounts.getOrDefault("ValidationException", 0),
-                    filteredCounts.getOrDefault("ERROR", 0),
-                    filteredCounts.getOrDefault("INFO", 0),
-                    filteredCounts.keySet().toString(),
-                    "Uploaded",
-                    String.join(", ", filteredCounts.keySet())
-                );
-            }
+                        userId,
+                        filename,
+                        null, // resultingFileName
+                        filteredCounts.getOrDefault("AccessException", 0),
+                        filteredCounts.getOrDefault("CloudClientException", 0),
+                        filteredCounts.getOrDefault("InvalidFormatException", 0),
+                        filteredCounts.getOrDefault("NullPointerException", 0),
+                        filteredCounts.getOrDefault("SchedulerException", 0),
+                        filteredCounts.getOrDefault("SuperCsvException", 0),
+                        filteredCounts.getOrDefault("ValidationException", 0),
+                        filteredCounts.getOrDefault("ERROR", 0),
+                        filteredCounts.getOrDefault("INFO", 0),
+                        0,
+                        filteredCounts.keySet().toString(),
+                        "Uploaded",
+                        String.join(", ", filteredCounts.keySet()),
+                        "FolderFile", // FileType for individual files
+                        String.valueOf(folderFileIndex++) // Common subId for the folder
+                    );
+                }
+
         }
 
         // Save aggregated statistics 
@@ -244,25 +250,29 @@ public class FileUploadController {
         httpSession.setAttribute("allLogs", allLines);
         httpSession.setAttribute("detailedErrorLogs", extractDetailedErrorLogs(allLines));
         httpSession.setAttribute("filenames", filenames);
-
+        
+    
         // Save aggregated statistics for the entire upload session
         statisticsFinalService.saveStatistics(
-            userId,
-            uploadedFileName,
-            null,
-            aggregatedCounts.getOrDefault("AccessException", 0),
-            aggregatedCounts.getOrDefault("CloudClientException", 0),
-            aggregatedCounts.getOrDefault("InvalidFormatException", 0),
-            aggregatedCounts.getOrDefault("NullPointerException", 0),
-            aggregatedCounts.getOrDefault("SchedulerException", 0),
-            aggregatedCounts.getOrDefault("SuperCsvException", 0),
-            aggregatedCounts.getOrDefault("ValidationException", 0),
-            aggregatedCounts.getOrDefault("ERROR", 0),
-            aggregatedCounts.getOrDefault("INFO", 0),
-            aggregatedCounts.keySet().toString(),
-            "Uploaded",
-            downloadedExceptionsStr
-        );
+                userId,
+                uploadedFileName,
+                generateResultingFileName(uploadedFileName, "Statistics"),
+                aggregatedCounts.getOrDefault("AccessException", 0),
+                aggregatedCounts.getOrDefault("CloudClientException", 0),
+                aggregatedCounts.getOrDefault("InvalidFormatException", 0),
+                aggregatedCounts.getOrDefault("NullPointerException", 0),
+                aggregatedCounts.getOrDefault("SchedulerException", 0),
+                aggregatedCounts.getOrDefault("SuperCsvException", 0),
+                aggregatedCounts.getOrDefault("ValidationException", 0),
+                aggregatedCounts.getOrDefault("ERROR", 0),
+                aggregatedCounts.getOrDefault("INFO", 0),
+                0, // debugCount
+                aggregatedCounts.keySet().toString(),
+                "Uploaded",
+                downloadedExceptionsStr,
+                "Folder", // FileType for the folder entry
+                null    // Same subId as individual files
+            );
 
         // Add attributes to the model
         model.addAttribute("filenames", filenames);

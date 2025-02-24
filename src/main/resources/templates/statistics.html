@@ -99,12 +99,14 @@
         }
         .filter-container {
             margin-bottom: 20px;
-            text-align: right; 
+            text-align: left;
         }
-        .filter-container label, 
-        .filter-container input,
-        .filter-container button {
-            margin-left: 10px; 
+        #fileFilter {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+            width: 300px;
         }
         @media screen and (max-width: 500px) {
             .header {
@@ -121,8 +123,10 @@
                 margin-left: 0;
                 margin-top: 40px;
             }
-            .filter-container {
-                text-align: left; 
+            #fileFilter {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 10px;
             }
         }
     </style>
@@ -130,7 +134,7 @@
 <body>
     <div class="header">
         Statistics
-       <!-- <button onclick="window.location.href='/logout'" class="logout-btn">Logout</button> -->
+        <!-- <button onclick="window.location.href='/logout'" class="logout-btn">Logout</button> -->
     </div>
     
     <div class="sidebar">
@@ -139,13 +143,19 @@
         <h2> <a href="/logAnalysisPage" target="_blank">Graph</a></h2>
     </div>
       
-    <div class="content">          
+    <div class="content">   
+        
         <div class="log-container">
+         <div class="filter-container">
+                <label for="fileFilter">Filter by Uploaded File:</label>
+                <select id="fileFilter">
+                    <option value="">Show All Files</option>
+                </select>
+            </div>  
             <table>
                 <thead>
                     <tr>
                         <th>Advanced Search</th>
-                        <!--  <th>FolderUpload</th>-->
                         <th>Timestamp</th>
                         <th>Uploaded File Name</th>
                         <th>Log Codes</th>
@@ -167,8 +177,7 @@
                     <th:block th:each="entry : ${statistics}">
                        <tr th:classappend="${#strings.startsWith(entry.uploadedFileName, 'Folder: ')} ? 'aggregated-row' : 'individual-row'">
                             <td><a href="/chat" target="_blank">Advanced Search</a></td>
-                            
-                            <td th:text="${entry.timestamp}"></td>
+                            <td th:text="${entry.timestamp}"></td>                          
                             <td  th:text="${entry.uploadedFileName}" target="_blank"></a></td>
                             <td th:text="${entry.logCodes}"></td>
                             <td th:text="${entry.resultingFileName}"></td>
@@ -239,60 +248,34 @@
     </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Populate the file filter dropdown
+    const fileFilter = document.getElementById('fileFilter');
+    const fileNameCells = document.querySelectorAll('#log-entries td:nth-child(3)');
+    const fileNames = Array.from(fileNameCells).map(cell => cell.textContent.trim());
+    const uniqueFiles = [...new Set(fileNames)];
 
-    document.getElementById('filter-btn').addEventListener('click', function() {
-        const fromDate = document.getElementById('from-date').value;
-        const toDate = document.getElementById('to-date').value;
-
-        if (fromDate && toDate) {
-            const filterUrl = `/api/statistics?from=${fromDate}&to=${toDate}`;
-
-            fetch(filterUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.length === 0) {
-                        document.getElementById('log-entries').innerHTML = '<tr><td colspan="15">No entries during those days</td></tr>';
-                    } else {
-                        populateLogEntries(data);
-                    }
-                })
-                .catch(error => console.error('Error fetching data:', error));
-        } else {
-            alert("Please select both dates to filter.");
-        }
+    uniqueFiles.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file;
+        option.textContent = file;
+        fileFilter.appendChild(option);
     });
 
-    function populateLogEntries(data) {
-        const tableBody = document.getElementById('log-entries');
-        tableBody.innerHTML = '';  // Clear previous entries
-
-        data.forEach(entry => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${entry.timestamp}</td>
-                <td>${entry.uploadedFileName}</td>
-                <td>${entry.logCodes}</td>
-                <td>${entry.resultingFileName}</td>
-                <td>${entry.downloadedFileName ? `<a href="path/to/download/${entry.downloadedFileName}" target="_blank">${entry.downloadedFileName}</a>` : 'No File Downloaded'}</td>
-                <td>${entry.status}</td>
-                <td>${entry.accessExceptionCount > 0 ? `<a href="/filteredlogs(accessType='AccessException', count=${entry.accessExceptionCount})">${entry.accessExceptionCount}</a>` : '0'}</td>
-                <td>${entry.cloudClientExceptionCount > 0 ? `<a href="/filteredlogs(accessType='CloudClientException', count=${entry.cloudClientExceptionCount})">${entry.cloudClientExceptionCount}</a>` : '0'}</td>
-                <td>${entry.invalidFormatExceptionCount > 0 ? `<a href="/filteredlogs(accessType='InvalidFormatException', count=${entry.invalidFormatExceptionCount})">${entry.invalidFormatExceptionCount}</a>` : '0'}</td>
-                <td>${entry.nullPointerExceptionCount > 0 ? `<a href="/filteredlogs(accessType='NullPointerException', count=${entry.nullPointerExceptionCount})">${entry.nullPointerExceptionCount}</a>` : '0'}</td>
-                <td>${entry.schedulerExceptionCount > 0 ? `<a href="/filteredlogs(accessType='SchedulerException', count=${entry.schedulerExceptionCount})">${entry.schedulerExceptionCount}</a>` : '0'}</td>
-                <td>${entry.superCsvExceptionCount > 0 ? `<a href="/filteredlogs(accessType='SuperCsvException', count=${entry.superCsvExceptionCount})">${entry.superCsvExceptionCount}</a>` : '0'}</td>
-                <td>${entry.errorCount > 0 ? `<a href="/filteredlogs(accessType='ERROR', count=${entry.errorCount})">${entry.errorCount}</a>` : '0'}</td>
-                <td>${entry.infoCount > 0 ? `<a href="/filteredlogs(accessType='INFO', count=${entry.infoCount})">${entry.infoCount}</a>` : '0'}</td>
-                <td>${entry.debugCount > 0 ? `<a href="/filteredlogs(accessType='DEBUG', count=${entry.debugCount})">${entry.debugCount}</a>` : '0'}</td>
-            `;
-            tableBody.appendChild(row);
+    // Add filter functionality
+    fileFilter.addEventListener('change', function() {
+        const selectedFile = this.value;
+        const rows = document.querySelectorAll('#log-entries tr');
+        
+        rows.forEach(row => {
+            const fileNameCell = row.querySelector('td:nth-child(3)');
+            if (fileNameCell) {
+                const rowFileName = fileNameCell.textContent.trim();
+                row.style.display = (!selectedFile || rowFileName === selectedFile) ? '' : 'none';
+            }
         });
-    }
+    });
+});
 </script>
 </body>
 </html>
